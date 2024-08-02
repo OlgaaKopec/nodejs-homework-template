@@ -49,6 +49,8 @@ const login = async (req, res, next) => {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
 
+    console.log('JWT_SECRET:', process.env.JWT_SECRET);  // Dodaj to logowanie
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
     user.token = token;
     await user.save();
