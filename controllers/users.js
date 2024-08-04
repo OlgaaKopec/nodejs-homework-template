@@ -148,18 +148,21 @@ const updateAvatar = async (req, res, next) => {
 const verifyEmail = async (req, res, next) => {
   try {
     const { verificationToken } = req.params;
+    console.log('Verification token received:', verificationToken);
     const user = await User.findOne({ verificationToken });
 
     if (!user) {
+      console.log('User not found with token:', verificationToken);
       return res.status(404).json({ message: 'User not found' });
     }
 
     user.verify = true;
-    user.verificationToken = null;
+    delete user.verificationToken;
     await user.save();
 
     res.status(200).json({ message: 'Verification successful' });
   } catch (err) {
+    console.error('Error during email verification:', err);
     next(err);
   }
 };

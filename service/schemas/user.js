@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 
 const userSchema = new Schema({
   password: {
@@ -20,7 +19,7 @@ const userSchema = new Schema({
     type: String,
     default: null,
   },
-  avatar:{
+  avatar: {
     type: String,
   },
   verify: {

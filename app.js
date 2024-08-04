@@ -20,7 +20,7 @@ app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
 
 const publicPath = path.join(__dirname, 'public', 'avatars');
-console.log('Serving static files from:', publicPath);
+
 app.use('/avatars', express.static(publicPath));
 
 app.use((req, res) => {
