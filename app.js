@@ -20,7 +20,6 @@ app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
 
 const publicPath = path.join(__dirname, 'public', 'avatars');
-console.log('Serving static files from:', publicPath);
 app.use('/avatars', express.static(publicPath));
 
 app.use((req, res) => {
@@ -35,7 +34,6 @@ const { DB_HOST } = process.env;
 
 mongoose.connect(DB_HOST, { 
 }).then(() => {
-  console.log('Database connection successful');
 }).catch(err => {
   console.error('Database connection error', err);
   process.exit(1);
