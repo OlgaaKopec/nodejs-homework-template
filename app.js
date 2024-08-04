@@ -35,9 +35,7 @@ const { DB_HOST } = process.env;
 
 mongoose.connect(DB_HOST, { 
 }).then(() => {
-  console.log('Database connection successful');
 }).catch(err => {
-  console.error('Database connection error', err);
   process.exit(1);
 });
 

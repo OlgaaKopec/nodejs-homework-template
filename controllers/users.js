@@ -26,8 +26,6 @@ const sendVerificationEmail = async (email, verificationToken) => {
     text: `Please verify your email by clicking the following link: ${verificationLink}`,
     html: `<h1>Hi there! You made it!</h1><p>Please verify your email by clicking the following link: <a href="${verificationLink}">${verificationLink}</a></p>`
   };
-  console.log('Sending verification email to:', email);
-  console.log('Verification link:', verificationLink);
 
   await mg.messages().send(data);
 };
@@ -48,10 +46,8 @@ const signup = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
     const verificationToken = uuidv4();
-    console.log('Generated verification token:', verificationToken);
     const newUser = await User.create({ email, password: hashedPassword, avatarURL, verificationToken });
 
-    console.log('New user created:', newUser);
     await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
@@ -62,7 +58,6 @@ const signup = async (req, res, next) => {
       },
     });
   } catch (err) {
-    console.error('Error during signup:', err);
     next(err);
   }
 };
@@ -139,7 +134,6 @@ const updateAvatar = async (req, res, next) => {
 
     res.json({ avatarURL });
   } catch (error) {
-    console.error('Error processing avatar:', error);
     await fs.unlink(tempUpload);
     next(error);
   }
@@ -148,11 +142,9 @@ const updateAvatar = async (req, res, next) => {
 const verifyEmail = async (req, res, next) => {
   try {
     const { verificationToken } = req.params;
-    console.log('Verification token received:', verificationToken);
     const user = await User.findOne({ verificationToken });
 
     if (!user) {
-      console.log('User not found with token:', verificationToken);
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -162,7 +154,6 @@ const verifyEmail = async (req, res, next) => {
 
     res.status(200).json({ message: 'Verification successful' });
   } catch (err) {
-    console.error('Error during email verification:', err);
     next(err);
   }
 };
