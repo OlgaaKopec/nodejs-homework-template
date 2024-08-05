@@ -19,9 +19,17 @@ const userSchema = new Schema({
     type: String,
     default: null,
   },
-  avatar:{
+  avatar: {
     type: String,
-  }
+  },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, 'Verify token is required'],
+  },
 });
 
 const User = model('user', userSchema);

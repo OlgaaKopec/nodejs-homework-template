@@ -7,11 +7,28 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs/promises');
 const path = require('path');
 const User = require("../service/schemas/user");
+const mailgun = require('mailgun-js');
+
+const DOMAIN = process.env.MAILGUN_DOMAIN;
+const mg = mailgun({apiKey: process.env.MAILGUN_API_KEY, domain: DOMAIN});
 
 const userSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
 });
+
+const sendVerificationEmail = async (email, verificationToken) => {
+  const verificationLink = `http://localhost:3000/api/users/verify/${verificationToken}`;
+  const data = {
+    from: 'Someone <no-reply@your-domain.com>',
+    to: email,
+    subject: 'Email Verification',
+    text: `Please verify your email by clicking the following link: ${verificationLink}`,
+    html: `<h1>Hi there! You made it!</h1><p>Please verify your email by clicking the following link: <a href="${verificationLink}">${verificationLink}</a></p>`
+  };
+
+  await mg.messages().send(data);
+};
 
 const signup = async (req, res, next) => {
   const { error } = userSchema.validate(req.body);
@@ -28,7 +45,10 @@ const signup = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
-    const newUser = await User.create({ email, password: hashedPassword, avatarURL });
+    const verificationToken = uuidv4();
+    const newUser = await User.create({ email, password: hashedPassword, avatarURL, verificationToken });
+
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
       user: {
@@ -114,9 +134,53 @@ const updateAvatar = async (req, res, next) => {
 
     res.json({ avatarURL });
   } catch (error) {
-    console.error('Error processing avatar:', error);
     await fs.unlink(tempUpload);
     next(error);
+  }
+};
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.verify = true;
+    delete user.verificationToken;
+    await user.save();
+
+    res.status(200).json({ message: 'Verification successful' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const resendVerificationEmail = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "missing required field email" });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res.status(400).json({ message: "Verification has already been passed" });
+    }
+
+    await sendVerificationEmail(email, user.verificationToken);
+
+    res.status(200).json({ message: "Verification email sent" });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -126,4 +190,6 @@ module.exports = {
   logout,
   current,
   updateAvatar,
+  verifyEmail,
+  resendVerificationEmail,
 };
